@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f4f4f9;
+          color: #333;
+        }
+        .container {
+          max-width: 600px;
+          margin: 50px auto;
+          background: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .question {
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+        .options {
+          margin-bottom: 20px;
+        }
+        .options button {
+          display: block;
+          width: 100%;
+          background: #007bff;
+          color: #fff;
+          border: none;
+          padding: 10px;
+          margin: 5px 0;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        .options button:hover {
+          background: #0056b3;
+        }
+        .score {
+          font-size: 20px;
+          color: green;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="quiz-section">
+        <div id="question-container" class="question"></div>
+        <div id="options-container" class="options"></div>
+    </div>
+    <div id="score-section" class="score" style="display: none;">
+        <p id="score-message"></p>
+        <button onclick="restartQuiz()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    const baseURL = "http://localhost:6969/quiz"; // Base URL for the Spring Boot API
+    let questions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    // Fetch questions from the API
+    async function fetchQuestions() {
+      try {
+        const response = await fetch(`${baseURL}/random`);
+        questions = await response.json();
+        currentQuestionIndex = 0;
+        score = 0;
+        displayQuestion();
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        alert("Unable to fetch questions. Please try again later.");
+      }
+    }
+
+    // Display the current question and options
+    function displayQuestion() {
+      if (currentQuestionIndex < questions.length) {
+        const question = questions[currentQuestionIndex];
+        const questionContainer = document.getElementById("question-container");
+        const optionsContainer = document.getElementById("options-container");
+
+        questionContainer.innerText = question.question;
+        optionsContainer.innerHTML = "";
+
+        question.options.forEach(option => {
+          const button = document.createElement("button");
+          button.innerText = option;
+          button.onclick = () => submitAnswer(option);
+          optionsContainer.appendChild(button);
+        });
+      } else {
+        displayScore();
+      }
+    }
+
+    // Submit the selected answer
+    async function submitAnswer(selectedOption) {
+      const question = questions[currentQuestionIndex];
+
+      // Check if the selected answer is correct
+      if (selectedOption === question.answer) {
+        score++;
+      }
+
+      currentQuestionIndex++;
+      displayQuestion();
+    }
+
+    // Display the final score
+    function displayScore() {
+      const quizSection = document.getElementById("quiz-section");
+      const scoreSection = document.getElementById("score-section");
+      const scoreMessage = document.getElementById("score-message");
+
+      quizSection.style.display = "none";
+      scoreSection.style.display = "block";
+      scoreMessage.innerText = `You scored ${score} out of ${questions.length}`;
+    }
+
+    // Restart the quiz
+    function restartQuiz() {
+      const quizSection = document.getElementById("quiz-section");
+      const scoreSection = document.getElementById("score-section");
+
+      quizSection.style.display = "block";
+      scoreSection.style.display = "none";
+      fetchQuestions();
+    }
+
+    // Initialize the quiz on page load
+    fetchQuestions();
+</script>
+</body>
+</html>
